@@ -1,0 +1,492 @@
+/* ===== Base / Layout ===== */
+.gl-page {
+  min-height: 100vh;
+  width: 100%;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.gl-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  background-image:
+    linear-gradient(to right, #ffffff10 1px, transparent 1px),
+    linear-gradient(to bottom, #ffffff10 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.gl-glow-top {
+  pointer-events: none;
+  position: absolute;
+  right: -160px;
+  top: 0;
+  height: 900px;
+  width: 900px;
+  border-radius: 50%;
+  background: rgba(163, 230, 53, 0.2);
+  filter: blur(120px);
+}
+
+.gl-glow-bottom {
+  pointer-events: none;
+  position: absolute;
+  right: 40px;
+  bottom: 0;
+  height: 500px;
+  width: 500px;
+  border-radius: 50%;
+  background: rgba(132, 204, 22, 0.2);
+  filter: blur(100px);
+}
+
+.gl-radial-tint {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 55%;
+  background: radial-gradient(ellipse 60% 80% at 70% 40%, rgba(163, 230, 53, 0.18), transparent 60%);
+}
+
+.gl-swoosh {
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 60%;
+  opacity: 0.9;
+}
+
+.gl-stars {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+.gl-star {
+  position: absolute;
+  border-radius: 50%;
+  background: #d9f99d;
+}
+
+.gl-signature-lines {
+  pointer-events: none;
+  position: absolute;
+  right: 26%;
+  top: 42%;
+  height: 224px;
+  width: 224px;
+  opacity: 0.9;
+}
+
+.gl-signature-glint {
+  pointer-events: none;
+  position: absolute;
+  right: 22%;
+  top: 40%;
+}
+
+.gl-signature-glint-dot {
+  height: 12px;
+  width: 12px;
+  transform: rotate(45deg);
+  background: #d9f99d;
+  box-shadow: 0 0 30px 10px rgba(190, 242, 100, 0.8);
+}
+
+.gl-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 56px;
+}
+
+.gl-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gl-logo-mark {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  height: 36px;
+  width: 36px;
+}
+
+.gl-logo-mark span {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.gl-logo-mark span.solid {
+  background: #fff;
+}
+
+.gl-logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.gl-logo-dot {
+  color: #a3e635;
+  vertical-align: super;
+}
+
+.gl-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.gl-status-online {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.gl-status-dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background: #a3e635;
+  box-shadow: 0 0 8px 2px rgba(163, 230, 53, 0.7);
+}
+
+.gl-divider-dot {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.gl-main {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  padding: 0 56px;
+}
+
+.gl-main-inner {
+  width: 100%;
+  max-width: 1152px;
+}
+
+.gl-heading {
+  font-size: 72px;
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #fff;
+  margin: 0;
+}
+
+.gl-heading-accent {
+  color: #a3e635;
+}
+
+.gl-subtext {
+  margin-top: 20px;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.gl-subtext-accent {
+  color: #a3e635;
+  font-weight: 500;
+}
+
+.gl-card {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(11, 12, 10, 0.8);
+  padding: 28px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.gl-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.gl-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px 16px;
+  transition: border-color 0.2s ease;
+}
+
+.gl-input-wrap:focus-within {
+  border-color: rgba(163, 230, 53, 0.6);
+}
+
+.gl-input-wrap.tight {
+  margin-bottom: 16px;
+}
+
+.gl-icon {
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.gl-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #fff;
+}
+
+.gl-input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.gl-eye-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.gl-eye-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.gl-row-between {
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.gl-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  user-select: none;
+}
+
+.gl-checkbox-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gl-checkbox-box {
+  display: flex;
+  height: 16px;
+  width: 16px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.gl-checkbox-box.checked {
+  border-color: #a3e635;
+  background: #a3e635;
+}
+
+.gl-checkbox-box svg {
+  height: 12px;
+  width: 12px;
+  fill: #000;
+}
+
+.gl-link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: #a3e635;
+  transition: color 0.2s ease;
+  padding: 0;
+  font-size: inherit;
+}
+
+.gl-link-btn:hover {
+  color: #bef264;
+}
+
+.gl-submit-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  background: #a3e635;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.gl-submit-btn:hover {
+  background: #bef264;
+}
+
+.gl-submit-btn:active {
+  transform: scale(0.99);
+}
+
+.gl-divider-row {
+  margin: 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gl-divider-line {
+  height: 1px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.gl-divider-text {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.gl-oauth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.gl-oauth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.gl-oauth-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gl-signup-text {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.gl-footer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 56px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.gl-footer-left,
+.gl-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gl-version-badge {
+  border-radius: 999px;
+  border: 1px solid rgba(163, 230, 53, 0.4);
+  padding: 4px 10px;
+  font-weight: 500;
+  color: #a3e635;
+}
+
+.gl-footer-accent {
+  color: #a3e635;
+}
+
+.gl-lock-badge {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+  .gl-header,
+  .gl-main,
+  .gl-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .gl-heading {
+    font-size: 44px;
+  }
+
+  .gl-swoosh,
+  .gl-glow-top,
+  .gl-glow-bottom,
+  .gl-radial-tint,
+  .gl-signature-lines,
+  .gl-signature-glint {
+    display: none;
+  }
+
+  .gl-card {
+    max-width: 100%;
+  }
+}
