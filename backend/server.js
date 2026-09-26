@@ -8,20 +8,51 @@ const crypto = require("crypto");
 
 const app = express();
 
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
 const PORT = process.env.PORT || 5000;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5174";
+
+const FRONTEND_URL =
+  process.env.FRONTEND_URL ||
+  "https://pl13pz9m-5173.inc1.devtunnels.ms";
+
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+
 const GOOGLE_REDIRECT_URI =
   process.env.GOOGLE_REDIRECT_URI ||
-  "http://localhost:5000/auth/google/callback";
+  "https://pl13pz9m-5000.inc1.devtunnels.ms/auth/google/callback";
+
+/* =========================================================
+   GOOGLE OAUTH STATE
+========================================================= */
 
 const googleStates = new Map();
 
-app.use(cors());
+/* =========================================================
+   MIDDLEWARE
+========================================================= */
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://pl13pz9m-5173.inc1.devtunnels.ms",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 
-// MYSQL
+/* =========================================================
+   MYSQL CONNECTION
+========================================================= */
+
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -32,23 +63,41 @@ const db = mysql.createConnection({
 
 db.connect((err) => {
   if (err) {
-    console.error("MySQL connection failed:", err);
+    console.error("❌ MySQL connection failed:");
+    console.error(err.message);
     return;
   }
 
-  console.log("MySQL connected successfully!");
+  console.log("✅ MySQL connected successfully!");
 });
 
-// GOOGLE LOGIN: send the user to Google
+/* =========================================================
+   TEST ROUTE
+========================================================= */
+
+app.get("/", (req, res) => {
+  res.json({
+    message: "GenLab Backend is running",
+    status: "success",
+  });
+});
+
+/* =========================================================
+   GOOGLE LOGIN
+   STEP 1: REDIRECT USER TO GOOGLE
+========================================================= */
+
 app.get("/auth/google", (req, res) => {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+    console.error("❌ Google credentials are missing.");
+
     return res.status(503).json({
-      message:
-        "Google credentials are missing. Check backend/.env.",
+      message: "Google credentials are missing. Check backend/.env.",
     });
   }
 
   const state = crypto.randomBytes(32).toString("hex");
+
   googleStates.set(state, Date.now() + 10 * 60 * 1000);
 
   const params = new URLSearchParams({
@@ -56,36 +105,59 @@ app.get("/auth/google", (req, res) => {
     redirect_uri: GOOGLE_REDIRECT_URI,
     response_type: "code",
     scope: "openid email profile",
-    state,
+    state: state,
     prompt: "select_account",
   });
 
-  return res.redirect(
-    `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
-  );
+  const googleURL =
+    "https://accounts.google.com/o/oauth2/v2/auth?" +
+    params.toString();
+
+  console.log("➡️ Redirecting user to Google...");
+
+  return res.redirect(googleURL);
 });
 
-// GOOGLE LOGIN: receive the user after Google approves login
+/* =========================================================
+   GOOGLE LOGIN
+   STEP 2: GOOGLE CALLBACK
+========================================================= */
+
 app.get("/auth/google/callback", async (req, res) => {
   const { code, state, error } = req.query;
+
   const expiresAt = googleStates.get(state);
 
   googleStates.delete(state);
 
-  if (error || !code || !expiresAt || expiresAt < Date.now()) {
-    return res.redirect(`${FRONTEND_URL}/?google=error`);
+  if (
+    error ||
+    !code ||
+    !expiresAt ||
+    expiresAt < Date.now()
+  ) {
+    console.error("❌ Invalid Google OAuth request.");
+
+    return res.redirect(
+      `${FRONTEND_URL}/?google=error`
+    );
   }
 
   try {
+    /* =====================================================
+       EXCHANGE GOOGLE CODE FOR ACCESS TOKEN
+    ===================================================== */
+
     const tokenResponse = await fetch(
       "https://oauth2.googleapis.com/token",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type":
+            "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
-          code,
+          code: code,
           client_id: GOOGLE_CLIENT_ID,
           client_secret: GOOGLE_CLIENT_SECRET,
           redirect_uri: GOOGLE_REDIRECT_URI,
@@ -95,16 +167,35 @@ app.get("/auth/google/callback", async (req, res) => {
     );
 
     if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+
+      console.error(
+        "❌ Google token request failed:",
+        errorText
+      );
+
       throw new Error("Google token request failed");
     }
 
-    const { access_token } = await tokenResponse.json();
+    const tokenData = await tokenResponse.json();
+
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+      throw new Error(
+        "Google did not return an access token"
+      );
+    }
+
+    /* =====================================================
+       GET GOOGLE USER PROFILE
+    ===================================================== */
 
     const profileResponse = await fetch(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -116,68 +207,128 @@ app.get("/auth/google/callback", async (req, res) => {
       !profile.email ||
       !profile.email_verified
     ) {
-      throw new Error("Google did not provide a verified email");
+      throw new Error(
+        "Google did not provide a verified email"
+      );
     }
+
+    console.log(
+      "✅ Google user:",
+      profile.email
+    );
+
+    /* =====================================================
+       CHECK USER IN MYSQL
+    ===================================================== */
 
     db.query(
       "SELECT id, name, email FROM users WHERE email = ?",
-      [profile.email],
+      [profile.email.toLowerCase()],
       async (dbError, users) => {
         if (dbError) {
-          console.error("Google login database error:", dbError);
-          return res.redirect(`${FRONTEND_URL}/?google=error`);
+          console.error(
+            "❌ Google login database error:",
+            dbError
+          );
+
+          return res.redirect(
+            `${FRONTEND_URL}/?google=error`
+          );
         }
 
-        // Existing user: sign in.
+        /* =================================================
+           EXISTING USER
+        ================================================= */
+
         if (users.length > 0) {
-          return res.redirect(`${FRONTEND_URL}/?google=success`);
+          console.log(
+            "✅ Existing Google user logged in:",
+            profile.email
+          );
+
+          return res.redirect(
+            `${FRONTEND_URL}/?google=success&name=${encodeURIComponent(
+              users[0].name
+            )}`
+          );
         }
 
-        // New Google user: create an account.
-        const generatedPassword = await bcrypt.hash(
-          crypto.randomBytes(32).toString("hex"),
-          10
-        );
+        /* =================================================
+           NEW GOOGLE USER
+        ================================================= */
 
-        db.query(
-          "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-          [
-            profile.name || profile.email.split("@")[0],
-            profile.email,
-            generatedPassword,
-          ],
-          (insertError) => {
-            if (insertError) {
-              console.error(
-                "Google user creation error:",
-                insertError
+        try {
+          const generatedPassword =
+            await bcrypt.hash(
+              crypto.randomBytes(32).toString("hex"),
+              10
+            );
+
+          const userName =
+            profile.name ||
+            profile.email.split("@")[0];
+
+          db.query(
+            `INSERT INTO users
+             (name, email, password)
+             VALUES (?, ?, ?)`,
+            [
+              userName,
+              profile.email.toLowerCase(),
+              generatedPassword,
+            ],
+            (insertError, result) => {
+              if (insertError) {
+                console.error(
+                  "❌ Google user creation error:",
+                  insertError
+                );
+
+                return res.redirect(
+                  `${FRONTEND_URL}/?google=error`
+                );
+              }
+
+              console.log(
+                "✅ New Google user created. ID:",
+                result.insertId
               );
+
               return res.redirect(
-                `${FRONTEND_URL}/?google=error`
+                `${FRONTEND_URL}/?google=success&name=${encodeURIComponent(
+                  userName
+                )}`
               );
             }
+          );
+        } catch (error) {
+          console.error(
+            "❌ Google password generation error:",
+            error
+          );
 
-            return res.redirect(
-              `${FRONTEND_URL}/?google=success`
-            );
-          }
-        );
+          return res.redirect(
+            `${FRONTEND_URL}/?google=error`
+          );
+        }
       }
     );
   } catch (error) {
-    console.error("Google OAuth error:", error);
-    return res.redirect(`${FRONTEND_URL}/?google=error`);
+    console.error(
+      "❌ Google OAuth error:",
+      error
+    );
+
+    return res.redirect(
+      `${FRONTEND_URL}/?google=error`
+    );
   }
 });
 
-// TEST
-app.get("/", (req, res) => {
-  res.json({
-    message: "GenLab Backend is running",
-  });
-});
+/* =========================================================
+   REGISTER
+========================================================= */
 
-// REGISTER
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -187,13 +338,27 @@ app.post("/register", async (req, res) => {
     });
   }
 
+  if (password.length < 6) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 6 characters",
+    });
+  }
+
+  const cleanName = name.trim();
+  const cleanEmail = email.trim().toLowerCase();
+
   try {
     db.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email],
+      "SELECT id FROM users WHERE email = ?",
+      [cleanEmail],
       async (err, results) => {
         if (err) {
-          console.error("Database error:", err);
+          console.error(
+            "❌ Registration database error:",
+            err
+          );
+
           return res.status(500).json({
             message: "Database error",
           });
@@ -205,21 +370,38 @@ app.post("/register", async (req, res) => {
           });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword =
+          await bcrypt.hash(password, 10);
 
         db.query(
-          "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-          [name, email, hashedPassword],
+          `INSERT INTO users
+           (name, email, password)
+           VALUES (?, ?, ?)`,
+          [
+            cleanName,
+            cleanEmail,
+            hashedPassword,
+          ],
           (insertError, result) => {
             if (insertError) {
-              console.error("Insert error:", insertError);
+              console.error(
+                "❌ User insertion error:",
+                insertError
+              );
+
               return res.status(500).json({
                 message: "Registration failed",
               });
             }
 
+            console.log(
+              "✅ New user registered:",
+              cleanEmail
+            );
+
             return res.status(201).json({
-              message: "Registration successful",
+              message:
+                "Registration successful",
               userId: result.insertId,
             });
           }
@@ -227,29 +409,43 @@ app.post("/register", async (req, res) => {
       }
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error(
+      "❌ Registration error:",
+      error
+    );
+
     return res.status(500).json({
       message: "Registration failed",
     });
   }
 });
 
-// LOGIN
+/* =========================================================
+   LOGIN
+========================================================= */
+
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({
-      message: "Email and password are required",
+      message:
+        "Email and password are required",
     });
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+
   db.query(
     "SELECT * FROM users WHERE email = ?",
-    [email],
+    [cleanEmail],
     async (err, results) => {
       if (err) {
-        console.error("Login database error:", err);
+        console.error(
+          "❌ Login database error:",
+          err
+        );
+
         return res.status(500).json({
           message: "Database error",
         });
@@ -257,22 +453,31 @@ app.post("/login", (req, res) => {
 
       if (results.length === 0) {
         return res.status(401).json({
-          message: "Invalid email or password",
+          message:
+            "Invalid email or password",
         });
       }
 
       try {
         const user = results[0];
-        const passwordMatch = await bcrypt.compare(
-          password,
-          user.password
-        );
+
+        const passwordMatch =
+          await bcrypt.compare(
+            password,
+            user.password
+          );
 
         if (!passwordMatch) {
           return res.status(401).json({
-            message: "Invalid email or password",
+            message:
+              "Invalid email or password",
           });
         }
+
+        console.log(
+          "✅ User logged in:",
+          user.email
+        );
 
         return res.status(200).json({
           message: "Login successful",
@@ -283,7 +488,11 @@ app.post("/login", (req, res) => {
           },
         });
       } catch (error) {
-        console.error("Bcrypt error:", error);
+        console.error(
+          "❌ Password comparison error:",
+          error
+        );
+
         return res.status(500).json({
           message: "Login failed",
         });
@@ -292,22 +501,44 @@ app.post("/login", (req, res) => {
   );
 });
 
-// GET USERS
+/* =========================================================
+   GET USERS
+========================================================= */
+
 app.get("/users", (req, res) => {
   db.query(
     "SELECT id, name, email FROM users",
     (err, results) => {
       if (err) {
+        console.error(
+          "❌ Get users error:",
+          err
+        );
+
         return res.status(500).json({
           message: "Database error",
         });
       }
 
-      res.json(results);
+      return res.json(results);
     }
   );
 });
 
+/* =========================================================
+   START SERVER
+========================================================= */
+
 app.listen(PORT, () => {
-  console.log(`GenLab Backend running on http://localhost:${PORT}`);
+  console.log("");
+  console.log("====================================");
+  console.log("       GENLAB BACKEND STARTED       ");
+  console.log("====================================");
+  console.log(`Local:    http://localhost:${PORT}`);
+  console.log(
+    "Public:   https://pl13pz9m-5000.inc1.devtunnels.ms"
+  );
+  console.log(`Frontend: ${FRONTEND_URL}`);
+  console.log("====================================");
+  console.log("");
 });

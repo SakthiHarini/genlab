@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./GenLablogin.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = "https://pl13pz9m-5000.inc1.devtunnels.ms";
 
 export default function App() {
   const [showSignup, setShowSignup] = useState(false);
