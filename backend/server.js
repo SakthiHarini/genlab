@@ -64,6 +64,8 @@ const db = mysql.createConnection({
   }
 });
 
+
+
 db.connect((err) => {
   if (err) {
     console.error("❌ MySQL connection failed:");
@@ -72,8 +74,26 @@ db.connect((err) => {
   }
 
   console.log("✅ MySQL connected successfully!");
-});
 
+  const createTable = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255) NOT NULL
+    )
+  `;
+
+  db.query(createTable, (error) => {
+    if (error) {
+      console.error("❌ Users table creation failed:");
+      console.error(error.message);
+      return;
+    }
+
+    console.log("✅ Users table is ready!");
+  });
+});
 /* =========================================================
    TEST ROUTE
 ========================================================= */
