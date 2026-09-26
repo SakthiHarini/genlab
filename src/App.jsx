@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./GenLablogin.css";
 
-const API_URL = "https://pl13pz9m-5000.inc1.devtunnels.ms";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function App() {
   const [showSignup, setShowSignup] = useState(false);
@@ -16,7 +16,9 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
 
     if (params.get("google") === "success") {
-      setUserName("Google user");
+      const googleName = params.get("name");
+
+      setUserName(googleName || "Google user");
       setLoggedIn(true);
 
       window.history.replaceState(
@@ -46,8 +48,15 @@ export default function App() {
       : `${API_URL}/login`;
 
     const body = showSignup
-      ? { name, email, password }
-      : { email, password };
+      ? {
+          name,
+          email,
+          password,
+        }
+      : {
+          email,
+          password,
+        };
 
     try {
       const response = await fetch(url, {
@@ -67,15 +76,17 @@ export default function App() {
 
       if (showSignup) {
         setMessage("Account created successfully. Please log in.");
+
         setShowSignup(false);
         setPassword("");
+
         return;
       }
 
       setUserName(data.user?.name || email.split("@")[0]);
       setLoggedIn(true);
     } catch (error) {
-      console.error(error);
+      console.error("Backend connection error:", error);
       setMessage("Cannot connect to the backend.");
     }
   };
@@ -96,7 +107,12 @@ export default function App() {
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div style={{ textAlign: "center", padding: "30px" }}>
+        <div
+          style={{
+            textAlign: "center",
+            padding: "30px",
+          }}
+        >
           <p
             style={{
               color: "#a3e635",
@@ -107,12 +123,24 @@ export default function App() {
             GENLAB WORKSPACE
           </p>
 
-          <h1 style={{ fontSize: "52px", margin: "15px 0" }}>
+          <h1
+            style={{
+              fontSize: "52px",
+              margin: "15px 0",
+            }}
+          >
             Welcome,{" "}
-            <span style={{ color: "#a3e635" }}>{userName}!</span>
+            <span style={{ color: "#a3e635" }}>
+              {userName}!
+            </span>
           </h1>
 
-          <p style={{ color: "#cbd5d0", fontSize: "18px" }}>
+          <p
+            style={{
+              color: "#cbd5d0",
+              fontSize: "18px",
+            }}
+          >
             You are signed in and ready to build with AI.
           </p>
 
@@ -122,6 +150,7 @@ export default function App() {
               setEmail("");
               setPassword("");
               setMessage("");
+              setUserName("");
             }}
             style={{
               marginTop: "28px",
@@ -159,7 +188,9 @@ export default function App() {
             <span className="gl-status-dot" />
             Online
           </span>
+
           <span className="gl-divider-dot"> | </span>
+
           <span>AI Infrastructure</span>
         </div>
       </header>
@@ -169,6 +200,7 @@ export default function App() {
           <h1 className="gl-heading">
             {showSignup ? "Create" : "Welcome"}
             <br />
+
             <span className="gl-heading-accent">
               {showSignup ? "Account." : "Back."}
             </span>
@@ -176,18 +208,28 @@ export default function App() {
 
           <p className="gl-subtext">
             Continue building the future with{" "}
-            <span className="gl-subtext-accent">AI.</span>
+            <span className="gl-subtext-accent">
+              AI.
+            </span>
           </p>
 
-          <form onSubmit={handleSubmit} className="gl-card">
+          <form
+            onSubmit={handleSubmit}
+            className="gl-card"
+          >
             {showSignup && (
               <>
-                <label className="gl-label">Full Name</label>
+                <label className="gl-label">
+                  Full Name
+                </label>
+
                 <div className="gl-input-wrap">
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) =>
+                      setName(e.target.value)
+                    }
                     placeholder="Your name"
                     className="gl-input"
                     required
@@ -196,24 +238,34 @@ export default function App() {
               </>
             )}
 
-            <label className="gl-label">Email Address</label>
+            <label className="gl-label">
+              Email Address
+            </label>
+
             <div className="gl-input-wrap">
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) =>
+                  setEmail(e.target.value)
+                }
                 placeholder="you@example.com"
                 className="gl-input"
                 required
               />
             </div>
 
-            <label className="gl-label">Password</label>
+            <label className="gl-label">
+              Password
+            </label>
+
             <div className="gl-input-wrap">
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) =>
+                  setPassword(e.target.value)
+                }
                 placeholder="••••••••••••"
                 className="gl-input"
                 required
@@ -221,19 +273,33 @@ export default function App() {
             </div>
 
             {message && (
-              <p style={{ color: "#bef264", marginBottom: "15px" }}>
+              <p
+                style={{
+                  color: "#bef264",
+                  marginBottom: "15px",
+                }}
+              >
                 {message}
               </p>
             )}
 
-            <button type="submit" className="gl-submit-btn">
-              {showSignup ? "Create Account" : "Continue"}{" "}
+            <button
+              type="submit"
+              className="gl-submit-btn"
+            >
+              {showSignup
+                ? "Create Account"
+                : "Continue"}{" "}
               <span aria-hidden="true">→</span>
             </button>
 
             <div className="gl-divider-row">
               <div className="gl-divider-line" />
-              <span className="gl-divider-text">OR CONTINUE WITH</span>
+
+              <span className="gl-divider-text">
+                OR CONTINUE WITH
+              </span>
+
               <div className="gl-divider-line" />
             </div>
 
@@ -264,7 +330,9 @@ export default function App() {
                   setPassword("");
                 }}
               >
-                {showSignup ? "Login" : "Create account"}
+                {showSignup
+                  ? "Login"
+                  : "Create account"}
               </button>
             </p>
           </form>
@@ -276,19 +344,26 @@ export default function App() {
 
 function GoogleIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 48 48">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 48 48"
+    >
       <path
         fill="#EA4335"
         d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
       />
+
       <path
         fill="#4285F4"
         d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.02l7.73 6c4.51-4.18 7.09-10.36 7.09-17.49z"
       />
+
       <path
         fill="#FBBC05"
         d="M10.53 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.94 23.94 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78z"
       />
+
       <path
         fill="#34A853"
         d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
