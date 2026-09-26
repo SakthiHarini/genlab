@@ -40,13 +40,13 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "https://sakthi-mauve.vercel.app",
       "https://pl13pz9m-5173.inc1.devtunnels.ms",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
 app.use(express.json());
 
 /* =========================================================
