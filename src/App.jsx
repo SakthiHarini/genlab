@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from "react";
 import "./GenLablogin.css";
 
+
 const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  "https://genlab-o7dn.onrender.com"
+  import.meta.env.VITE_API_URL || "http://localhost:5000"
 ).replace(/\/+$/, "");
 
 export default function App() {
